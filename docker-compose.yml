@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # 1. The Reverse Proxy & Maintenance Enforcer
+  nginx:
+    image: openresty/openresty:alpine
+    container_name: maintenance_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./nginx/common:/etc/nginx/common:ro
+      - ./nginx/lua:/etc/nginx/lua:ro
+    depends_on:
+      - redis
+      - backend
+
+  # 2. Redis for storing the Maintenance toggle
+  redis:
+    image: redis:alpine
+    container_name: maintenance_redis
+    ports:
+      - "6379:6379"
+
+  # 3. The "Real" Backend Application (simulated)
+  backend:
+    image: nginx:alpine
+    container_name: maintenance_backend
+    volumes:
+      - ./backend:/usr/share/nginx/html:ro
+
+  # 4. The Admin Interface to toggle Maintenance
+  admin:
+    build: ./admin
+    container_name: maintenance_admin
+    ports:
+      - "3000:3000"
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis

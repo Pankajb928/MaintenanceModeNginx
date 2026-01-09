@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Control</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .control-panel {
+            background: #1f2937;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 450px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #374151;
+            padding-bottom: 10px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #374151;
+        }
+
+        .row:last-child {
+            border-bottom: none;
+        }
+
+        .app-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4b5563;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #ef4444;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(22px);
+        }
+
+        .status {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="control-panel">
+        <h2>🛠 Maintenance Control</h2>
+
+        <!-- Row 1: Learner App -->
+        <div class="row">
+            <div>
+                <div class="app-name">🎓 Learner App</div>
+                <div class="status" id="status-LEARNER">Unknown</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" onchange="toggle('LEARNER', this)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <!-- Row 2: Admin Portal -->
+        <div class="row">
+            <div>
+                <div class="app-name">🛡️ Admin Portal</div>
+                <div class="status" id="status-ADMIN_PORTAL">Unknown</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" onchange="toggle('ADMIN_PORTAL', this)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+    </div>
+
+    <script>
+        const SCOPES = ['LEARNER', 'ADMIN_PORTAL'];
+
+        async function init() {
+            for (const scope of SCOPES) {
+                const res = await fetch(`/api/maintenance?scope=${scope}`);
+                const data = await res.json();
+                updateRow(scope, data.active);
+            }
+        }
+
+        function updateRow(scope, isActive) {
+            const checkbox = document.querySelector(`input[onchange="toggle('${scope}', this)"]`);
+            const statusLabel = document.getElementById(`status-${scope}`);
+
+            checkbox.checked = isActive;
+            statusLabel.textContent = isActive ? "MAINTENANCE ACTIVE" : "Operational";
+            statusLabel.style.color = isActive ? "#ef4444" : "#10b981";
+        }
+
+        async function toggle(scope, checkbox) {
+            const active = checkbox.checked;
+            updateRow(scope, active); // Optimistic update
+
+            await fetch('/api/maintenance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scope,
+                    active,
+                    message: `${scope} is currently under maintenance.`
+                })
+            });
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
