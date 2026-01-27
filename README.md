@@ -65,6 +65,7 @@ Use `cicd_toggle.sh` to automate maintenance toggles, useful for deployment pipe
 ```
 
 **Examples**:
+#This is required for Learner Maintenance App and change directly in redis caches
 ```bash
 # Enable maintenance for Learner App
 ./cicd_toggle.sh LEARNER ON
